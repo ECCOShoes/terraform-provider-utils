@@ -1,0 +1,86 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - run: go build -v ./...
+
+  test:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - run: go test -v -cover -timeout=120s -parallel=10 ./...
+
+  acceptance:
+    name: Acceptance Tests (Terraform ${{ matrix.terraform }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform:
+          - '1.8.*'
+          - '1.9.*'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+      - run: go mod download
+      - run: TF_ACC=1 go test -v -cover -timeout 120m ./...
+        env:
+          TF_ACC: "1"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
