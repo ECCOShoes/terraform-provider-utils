@@ -97,7 +97,7 @@ func (r DeepmergeFunction) Run(ctx context.Context, req function.RunRequest, res
 			}
 
 			// Convert result back to Terraform dynamic value
-			dynamicVal, err := goToTerraformDynamic(ctx, result)
+			dynamicVal, err := goToTerraformDynamic(result)
 			if err != nil {
 				resp.Error = function.ConcatFuncErrors(function.NewArgumentFuncError(1, "Failed to convert result to dynamic value: "+err.Error()))
 				return
@@ -135,7 +135,7 @@ func (r DeepmergeFunction) Run(ctx context.Context, req function.RunRequest, res
 	}
 
 	// Convert result back to Terraform dynamic value
-	dynamicVal, err := goToTerraformDynamic(ctx, result)
+	dynamicVal, err := goToTerraformDynamic(result)
 	if err != nil {
 		resp.Error = function.ConcatFuncErrors(function.NewArgumentFuncError(1, "Failed to convert result to dynamic value: "+err.Error()))
 		return
@@ -144,7 +144,7 @@ func (r DeepmergeFunction) Run(ctx context.Context, req function.RunRequest, res
 	resp.Error = function.ConcatFuncErrors(resp.Result.Set(ctx, dynamicVal))
 }
 
-// mergeValues performs a deep merge of two arbitrary Go values
+// mergeValues performs a deep merge of two arbitrary Go values.
 func mergeValues(a, b interface{}, overwrite bool) (interface{}, error) {
 	// If types are different, decide based on overwrite flag
 	aMap, aIsMap := a.(map[string]interface{})
@@ -195,22 +195,22 @@ func mergeValues(a, b interface{}, overwrite bool) (interface{}, error) {
 	}
 }
 
-// dynamicToGo converts a DynamicValue to a Go value (map, slice, or scalar)
+// dynamicToGo converts a DynamicValue to a Go value (map, slice, or scalar).
 func dynamicToGo(dv basetypes.DynamicValue) (interface{}, error) {
 	// Get the underlying value and convert to Go
 	underlyingValue := dv.UnderlyingValue()
 	return terraformValueToGo(underlyingValue)
 }
 
-// goToTerraformDynamic converts a Go value back to a Terraform DynamicValue
-func goToTerraformDynamic(ctx context.Context, val interface{}) (basetypes.DynamicValue, error) {
+// goToTerraformDynamic converts a Go value back to a Terraform DynamicValue.
+func goToTerraformDynamic(val interface{}) (basetypes.DynamicValue, error) {
 	switch v := val.(type) {
 	case map[string]interface{}:
 		// Convert map to object
 		attrTypes := make(map[string]attr.Type)
 		attrValues := make(map[string]attr.Value)
 		for key, value := range v {
-			dynVal, err := goToTerraformDynamic(ctx, value)
+			dynVal, err := goToTerraformDynamic(value)
 			if err != nil {
 				return basetypes.NewDynamicNull(), err
 			}
@@ -228,7 +228,7 @@ func goToTerraformDynamic(ctx context.Context, val interface{}) (basetypes.Dynam
 		elems := make([]attr.Value, 0, len(v))
 		elemTypes := make([]attr.Type, 0, len(v))
 		for _, item := range v {
-			dynVal, err := goToTerraformDynamic(ctx, item)
+			dynVal, err := goToTerraformDynamic(item)
 			if err != nil {
 				return basetypes.NewDynamicNull(), err
 			}
@@ -259,7 +259,7 @@ func goToTerraformDynamic(ctx context.Context, val interface{}) (basetypes.Dynam
 	}
 }
 
-// terraformValueToGo recursively converts Terraform values to Go native types
+// terraformValueToGo recursively converts Terraform values to Go native types.
 func terraformValueToGo(val interface{}) (interface{}, error) {
 	switch v := val.(type) {
 	case basetypes.StringValuable:
