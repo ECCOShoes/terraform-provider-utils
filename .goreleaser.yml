@@ -45,7 +45,6 @@ checksum:
   algorithm: sha256
 signs:
   - artifacts: checksum
-    signature: "${artifact}.sig"
     args:
       - "--batch"
       - "--local-user"
