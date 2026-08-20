@@ -63,7 +63,9 @@ func (p *utilsProvider) EphemeralResources(ctx context.Context) []func() ephemer
 }
 
 func (p *utilsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewVersionDataSource,
+	}
 }
 
 func (p *utilsProvider) Functions(ctx context.Context) []func() function.Function {
