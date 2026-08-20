@@ -1,5 +1,3 @@
-# Copyright IBM Corp. 2026
-
 terraform {
   required_providers {
     utils = {
@@ -46,6 +44,10 @@ output "alpha_nuget_version" {
 
 output "alpha_npm_version" {
   value = data.utils_version.alpha.npm.version # => "1.2.3-alpha.42+abcdef1"
+}
+
+output "alpha_docker_version" {
+  value = data.utils_version.alpha.docker.version # => "1.2.3-alpha.42-abcdef1"
 }
 
 output "alpha_debian_version" {

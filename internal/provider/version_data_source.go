@@ -44,6 +44,7 @@ type versionDataSourceModel struct {
 	Debian         types.Object `tfsdk:"debian"`
 	Nuget          types.Object `tfsdk:"nuget"`
 	Npm            types.Object `tfsdk:"npm"`
+	Docker         types.Object `tfsdk:"docker"`
 }
 
 type dotnetVersionModel struct {
@@ -80,7 +81,7 @@ func (d *VersionDataSource) Metadata(_ context.Context, req datasource.MetadataR
 
 func (d *VersionDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Computes ecosystem-specific version strings (dotnet, debian, nuget, npm) from a common set of build inputs (base version, revision/build numbers, git commit sha, and release channel).",
+		MarkdownDescription: "Computes ecosystem-specific version strings (dotnet, debian, nuget, npm, docker) from a common set of build inputs (base version, revision/build numbers, git commit sha, and release channel).",
 		Attributes: map[string]schema.Attribute{
 			"base_version": schema.StringAttribute{
 				Required:            true,
@@ -162,6 +163,16 @@ func (d *VersionDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 					"version": schema.StringAttribute{
 						Computed:            true,
 						MarkdownDescription: "e.g. `1.2.3` on the release channel (`1.2.3+abc1234` if `git_sha` is set), or `1.2.3-alpha.4+abc1234` otherwise.",
+					},
+				},
+			},
+			"docker": schema.SingleNestedAttribute{
+				Computed:            true,
+				MarkdownDescription: "Version string for a Docker image tag. Tags cannot contain `+`, so `-` is used instead of SemVer build metadata. Unlike the other ecosystems, `git_sha` is not appended on the release channel.",
+				Attributes: map[string]schema.Attribute{
+					"version": schema.StringAttribute{
+						Computed:            true,
+						MarkdownDescription: "e.g. `1.2.3` on the release channel (`git_sha` is not appended), or `1.2.3-alpha.4-abc1234` otherwise.",
 					},
 				},
 			},
@@ -247,6 +258,16 @@ func (d *VersionDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		semverVersion += "+" + gitSha
 	}
 
+	// Docker tags cannot contain '+', so the sha is joined with '-' instead of SemVer metadata.
+	// Unlike the other ecosystems, the release channel never carries a sha suffix here.
+	dockerVersion := semverBase
+	if !isRelease {
+		dockerVersion = fmt.Sprintf("%s-%s.%d", semverBase, releaseChannel, buildNumber)
+		if gitSha != "" {
+			dockerVersion += "-" + gitSha
+		}
+	}
+
 	debianVersion := semverBase
 	if !isRelease {
 		debianVersion = fmt.Sprintf("%s~%s~git%s", semverBase, releaseChannel, debianDate)
@@ -282,6 +303,11 @@ func (d *VersionDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	})
 	resp.Diagnostics.Append(diags...)
 
+	dockerObj, diags := types.ObjectValueFrom(ctx, semverAttrTypes, semverVersionModel{
+		Version: types.StringValue(dockerVersion),
+	})
+	resp.Diagnostics.Append(diags...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -293,6 +319,7 @@ func (d *VersionDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.Debian = debianObj
 	data.Nuget = nugetObj
 	data.Npm = npmObj
+	data.Docker = dockerObj
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

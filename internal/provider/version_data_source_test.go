@@ -33,6 +33,7 @@ func TestVersionDataSource_Release(t *testing.T) {
 				output "debian_version" { value = data.utils_version.test.debian.version }
 				output "nuget_version" { value = data.utils_version.test.nuget.version }
 				output "npm_version" { value = data.utils_version.test.npm.version }
+				output "docker_version" { value = data.utils_version.test.docker.version }
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue("dotnet_app_version", knownvalue.StringExact("1.2.3.42")),
@@ -40,6 +41,7 @@ func TestVersionDataSource_Release(t *testing.T) {
 					statecheck.ExpectKnownOutputValue("debian_version", knownvalue.StringExact("1.2.3-1")),
 					statecheck.ExpectKnownOutputValue("nuget_version", knownvalue.StringExact("1.2.3")),
 					statecheck.ExpectKnownOutputValue("npm_version", knownvalue.StringExact("1.2.3")),
+					statecheck.ExpectKnownOutputValue("docker_version", knownvalue.StringExact("1.2.3")),
 				},
 			},
 		},
@@ -67,14 +69,16 @@ func TestVersionDataSource_ReleaseWithGitSha(t *testing.T) {
 				output "debian_version" { value = data.utils_version.test.debian.version }
 				output "nuget_version" { value = data.utils_version.test.nuget.version }
 				output "npm_version" { value = data.utils_version.test.npm.version }
+				output "docker_version" { value = data.utils_version.test.docker.version }
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					// git_sha is ignored only by the purely-numeric dotnet app_version.
+					// git_sha is ignored by the purely-numeric dotnet app_version, and by docker on the release channel.
 					statecheck.ExpectKnownOutputValue("dotnet_app_version", knownvalue.StringExact("1.2.3.42")),
 					statecheck.ExpectKnownOutputValue("dotnet_info_version", knownvalue.StringExact("1.2.3-abcdef1")),
 					statecheck.ExpectKnownOutputValue("debian_version", knownvalue.StringExact("1.2.3+gitabcdef1-1")),
 					statecheck.ExpectKnownOutputValue("nuget_version", knownvalue.StringExact("1.2.3+abcdef1")),
 					statecheck.ExpectKnownOutputValue("npm_version", knownvalue.StringExact("1.2.3+abcdef1")),
+					statecheck.ExpectKnownOutputValue("docker_version", knownvalue.StringExact("1.2.3")),
 				},
 			},
 		},
@@ -105,6 +109,7 @@ func TestVersionDataSource_AlphaWithGitSha(t *testing.T) {
 				output "debian_arch" { value = data.utils_version.test.debian.arch }
 				output "nuget_version" { value = data.utils_version.test.nuget.version }
 				output "npm_version" { value = data.utils_version.test.npm.version }
+				output "docker_version" { value = data.utils_version.test.docker.version }
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue("dotnet_app_version", knownvalue.StringExact("1.2.3.42")),
@@ -113,6 +118,7 @@ func TestVersionDataSource_AlphaWithGitSha(t *testing.T) {
 					statecheck.ExpectKnownOutputValue("debian_arch", knownvalue.StringExact("amd64")),
 					statecheck.ExpectKnownOutputValue("nuget_version", knownvalue.StringExact("1.2.3-alpha.42+abcdef1")),
 					statecheck.ExpectKnownOutputValue("npm_version", knownvalue.StringExact("1.2.3-alpha.42+abcdef1")),
+					statecheck.ExpectKnownOutputValue("docker_version", knownvalue.StringExact("1.2.3-alpha.42-abcdef1")),
 				},
 			},
 		},
@@ -139,6 +145,7 @@ func TestVersionDataSource_BetaWithoutGitSha(t *testing.T) {
 				output "dotnet_info_version" { value = data.utils_version.test.dotnet.info_version }
 				output "debian" { value = data.utils_version.test.debian }
 				output "nuget_version" { value = data.utils_version.test.nuget.version }
+				output "docker_version" { value = data.utils_version.test.docker.version }
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue("dotnet_info_version", knownvalue.StringExact("1.2-beta")),
@@ -147,6 +154,7 @@ func TestVersionDataSource_BetaWithoutGitSha(t *testing.T) {
 						"arch":    knownvalue.Null(),
 					})),
 					statecheck.ExpectKnownOutputValue("nuget_version", knownvalue.StringExact("1.2.3-beta.42")),
+					statecheck.ExpectKnownOutputValue("docker_version", knownvalue.StringExact("1.2.3-beta.42")),
 				},
 			},
 		},
