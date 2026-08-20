@@ -26,6 +26,25 @@ jobs:
       - run: go vet ./...
       - run: go test ./... -count=1
 
+  test-acc:
+    name: Acceptance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+      # use the CLI installed above directly, bypassing hc-install's own download+GPG verification
+      - run: echo "TF_ACC_TERRAFORM_PATH=$(which terraform)" >> "$GITHUB_ENV"
+      - run: go test ./... -count=1 -timeout 120m
+        env:
+          TF_ACC: "1"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
