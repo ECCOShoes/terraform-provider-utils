@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
   workflow_dispatch:
-    
+
 permissions:
   contents: read
 
@@ -50,7 +50,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: go generate ./...
